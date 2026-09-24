@@ -2564,3 +2564,19 @@ No final, entregue:
 - secrets que o usuário ainda precisa configurar;
 - passos manuais restantes;
 - qualquer diferença entre o PRP e a implementação, com justificativa.
+
+---
+
+# Override de implementação — rotação por frequência e urgência
+
+Este override substitui a ordenação estática da seção 16 para seleção de buscas. Ele preserva os demais limites e critérios do PRP.
+
+| ID | Requisito | Estado |
+|---|---|---|
+| ROT-1 | Prioridade 1, 2 e 3 corresponde a intervalos de 7, 14 e 21 dias. | verified |
+| ROT-2 | Busca nunca executada tem preferência; entre elas, prioridade numérica menor vem primeiro. | verified |
+| ROT-3 | Buscas já executadas são ordenadas por urgência: dias decorridos divididos pelo intervalo da prioridade, maior primeiro. | verified |
+| ROT-4 | Persistir `Última execução` e `Próxima execução` por linha na aba `Busca`; o bootstrap pode importar uma vez o último horário disponível em `Automação`, mas depois a própria linha é a fonte do agendamento. | verified: colunas migradas, buscas executadas e datas gravadas na planilha |
+| ROT-5 | Respeitar o limite de pesquisas por execução e o máximo de resultados configurado em cada linha. | verified |
+| ROT-6 | Preservar recuperação `PENDENTE`, filtros CLI, dry-run e execução manual do GitHub Actions. | verified |
+| ROT-7 | Testar prioridade, urgência, nunca executadas, capacidade por linha, persistência e falhas sem buscas pagas. | verified: checks locais; integração real após migração |

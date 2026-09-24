@@ -7,7 +7,7 @@ export const LEAD_HEADERS = [
   "Situação comercial", "Último contato", "Próximo contato", "Resultado", "Observações",
 ];
 
-export const SEARCH_HEADERS = ["Ativo?", "Nicho", "Cidade", "UF", "Máx. resultados", "Produto tem bom valor?", "Prioridade da busca", "Observações"];
+export const SEARCH_HEADERS = ["Ativo?", "Nicho", "Cidade", "UF", "Máx. resultados", "Produto tem bom valor?", "Prioridade da busca", "Observações", "Última execução", "Próxima execução"];
 export const EVIDENCE_HEADERS = ["Place ID", "Empresa", "Campo", "Valor encontrado", "Fonte", "URL da fonte", "Verificado em", "Confiança", "Observação"];
 export const AUTOMATION_HEADERS = ["Place ID", "Hash dedupe", "Empresa", "Nicho", "Cidade", "Consulta", "Primeira vez visto", "Última vez visto", "Site verificado em", "Google Ads verificado em", "Meta Ads verificado em", "Apify Run ID", "Versão automação", "Status interno"];
 export const AUTOMATION_ROW = 1;

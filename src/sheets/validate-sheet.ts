@@ -1,6 +1,7 @@
 import { TAB } from "../config/constants.js";
 import { LEAD_HEADERS } from "../types/sheet.js";
 import { quoteSheet, type SheetsClient } from "./client.js";
+import { readSearchConfig } from "./read-search-config.js";
 
 export async function validateSheet(sheets: SheetsClient): Promise<{ tabs: string[]; leadHeaders: string[] }> {
   await sheets.verifyAuthentication();
@@ -31,6 +32,7 @@ export async function validateSheet(sheets: SheetsClient): Promise<{ tabs: strin
   };
   const mismatches = LEAD_HEADERS.flatMap((expected, index) => normalized(headers[index] ?? "") === normalized(expected) ? [] : [`${columnName(index)}: esperado "${expected}", encontrado "${headers[index] ?? ""}"`]);
   if (mismatches.length) throw new Error(`Cabeçalho Leads (linha 7) incompatível: ${mismatches.join("; ")}`);
+  await readSearchConfig(sheets);
   console.log("Spreadsheet schema valid.");
   return { tabs, leadHeaders: headers };
 }

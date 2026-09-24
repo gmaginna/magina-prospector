@@ -7,6 +7,10 @@ export type SearchConfig = {
   priority: number;
   notes: string;
   query: string;
+  rowNumber?: number;
+  lastRunAt?: string | null;
+  lastRunColumn?: number;
+  nextRunColumn?: number;
 };
 
 export type Prospect = {

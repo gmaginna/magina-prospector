@@ -1,14 +1,19 @@
 import type { SearchConfig } from "../types/business.js";
-import type { ExistingAutomation } from "../sheets/read-existing-leads.js";
+import { parseScheduleDate, urgency } from "./frequency.js";
 
-function timeOf(value: string): number {
-  const parsed = Date.parse(value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
+export function selectSearches(searches: SearchConfig[], pendingQueries: ReadonlySet<string>, limit: number, now = new Date()): SearchConfig[] {
+  return [...searches].sort((a, b) => {
+    const pendingOrder = Number(pendingQueries.has(b.query)) - Number(pendingQueries.has(a.query));
+    if (pendingOrder) return pendingOrder;
 
-export function selectSearches(searches: SearchConfig[], history: ExistingAutomation[], limit: number): SearchConfig[] {
-  const lastRun = new Map<string, number>();
-  for (const entry of history) lastRun.set(entry.query, Math.max(lastRun.get(entry.query) ?? 0, timeOf(entry.lastSeen)));
-  const pending = new Set(history.filter((entry) => entry.status === "PENDENTE").map((entry) => entry.query));
-  return [...searches].sort((a, b) => Number(pending.has(b.query)) - Number(pending.has(a.query)) || a.priority - b.priority || (lastRun.get(a.query) ?? 0) - (lastRun.get(b.query) ?? 0) || a.query.localeCompare(b.query)).slice(0, limit);
+    const aLast = parseScheduleDate(a.lastRunAt, now);
+    const bLast = parseScheduleDate(b.lastRunAt, now);
+    if (!aLast && !bLast) return a.priority - b.priority || (a.rowNumber ?? 0) - (b.rowNumber ?? 0);
+    if (!aLast) return -1;
+    if (!bLast) return 1;
+
+    const urgencyOrder = urgency(b.lastRunAt, b.priority, now) - urgency(a.lastRunAt, a.priority, now);
+    if (Number.isFinite(urgencyOrder) && urgencyOrder) return urgencyOrder;
+    return a.priority - b.priority || aLast.getTime() - bLast.getTime() || (a.rowNumber ?? 0) - (b.rowNumber ?? 0);
+  }).slice(0, Math.max(0, limit));
 }

@@ -15,6 +15,7 @@ O MVP não usa OpenAI API, Clay, banco de dados próprio, navegador automatizado
 ```bash
 npm install
 cp .env.example .env
+npm run bootstrap-sheet
 npm run validate-sheet
 npm run dry-run
 ```
@@ -33,11 +34,13 @@ O cliente também aceita `GOOGLE_SERVICE_ACCOUNT_JSON_B64`, que prevalece sobre 
 
 ## Planilha
 
-O comando `npm run validate-sheet` verifica as abas `Planos`, `Leads`, `Configuração`, `Busca`, `Evidências` e `Automação`, além dos cabeçalhos de `Leads!A7:AG7`.
+O comando `npm run validate-sheet` verifica as abas `Planos`, `Leads`, `Configuração`, `Busca`, `Evidências` e `Automação`, os cabeçalhos de `Leads!A7:AG7` e as colunas de rotação na aba `Busca`.
 
-`npm run bootstrap-sheet` cria apenas `Busca`, `Evidências` ou `Automação` quando estiverem ausentes. Não recria `Leads`, não apaga dados e não muda preços. Revise manualmente qualquer aba criada antes da primeira prospecção.
+`npm run bootstrap-sheet` cria apenas `Busca`, `Evidências` ou `Automação` quando estiverem ausentes. Na aba `Busca`, acrescenta `Última execução` e `Próxima execução` após `Observações`, preserva valores existentes e recupera o histórico mais recente disponível em `Automação`. Não recria `Leads`, não apaga dados e não muda preços. Revise a migração antes da primeira prospecção.
 
-Na aba `Busca`, mantenha as colunas `Ativo?`, `Nicho`, `Cidade`, `UF`, `Máx. resultados`, `Produto tem bom valor?`, `Prioridade da busca` e `Observações`. O job ignora linhas inativas e escolhe até quatro pesquisas por execução.
+Na aba `Busca`, mantenha as colunas `Ativo?`, `Nicho`, `Cidade`, `UF`, `Máx. resultados`, `Produto tem bom valor?`, `Prioridade da busca`, `Observações`, `Última execução` e `Próxima execução`. `Máx. resultados` vale para cada linha, limitado pelo teto de segurança `MAX_RESULTS_PER_SEARCH`. O job ignora linhas inativas e escolhe até quatro pesquisas por execução.
+
+Prioridade define frequência: prioridade 1 roda a cada 7 dias, 2 a cada 14 e 3 a cada 21. Buscas nunca executadas têm preferência; entre elas, prioridade menor vem primeiro. As demais são ordenadas por urgência (`dias desde a última execução ÷ intervalo`), maior urgência primeiro. `Próxima execução` mostra `Agora` para buscas nunca executadas. Execuções que falham não atualizam `Última execução`.
 
 ## Apify e custos
 
@@ -53,6 +56,7 @@ npm run bootstrap-sheet
 npm run dry-run
 npm run prospect
 npm run prospect -- --city Campinas --niche "Móveis planejados"
+npm run prospect -- --city Campinas --niche "Móveis planejados" --max-results 10
 npm run prospect -- --max-new-leads 10
 ```
 

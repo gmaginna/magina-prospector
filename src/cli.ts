@@ -16,7 +16,7 @@ async function main(): Promise<void> {
   }
   if (command === "bootstrap-sheet") {
     const created = await bootstrapSheet(sheets);
-    console.log(created.length ? `Abas criadas: ${created.join(", ")}` : "As abas necessárias já existem; nenhum dado foi alterado.");
+    console.log(created.length ? `Bootstrap concluído: ${created.join("; ")}` : "Abas e colunas de rotação já estão prontas; nenhuma alteração foi necessária.");
     return;
   }
   if (command !== "prospect") throw new Error(`Comando desconhecido: ${command}`);
@@ -25,10 +25,13 @@ async function main(): Promise<void> {
   const maxOption = optionValue("--max-new-leads", args);
   const maxNewLeads = maxOption ? Number(maxOption) : undefined;
   if (maxNewLeads !== undefined && (!Number.isInteger(maxNewLeads) || maxNewLeads < 1)) throw new Error("--max-new-leads deve ser um inteiro positivo.");
+  const resultsOption = optionValue("--max-results", args);
+  const maxResults = resultsOption ? Number(resultsOption) : undefined;
+  if (maxResults !== undefined && (!Number.isInteger(maxResults) || maxResults < 1)) throw new Error("--max-results deve ser um inteiro positivo.");
   const release = await acquireRunLock();
   try {
     await prospect(sheets, env, {
-      dryRun: hasOption("--dry-run", args), maxNewLeads,
+      dryRun: hasOption("--dry-run", args), maxNewLeads, maxResults,
       city: optionValue("--city", args), niche: optionValue("--niche", args),
     });
   }

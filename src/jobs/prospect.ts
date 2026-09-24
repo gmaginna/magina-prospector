@@ -16,10 +16,12 @@ import { writeAutomation, type AutomationRecord } from "../sheets/write-automati
 import { writeLeads } from "../sheets/write-leads.js";
 import { readLeadIdentities } from "../sheets/read-lead-identities.js";
 import { quoteSheet, type SheetsClient } from "../sheets/client.js";
+import { formatScheduleDate, nextRunDate } from "../rotation/frequency.js";
+import { writeSearchSchedule } from "../sheets/write-search-schedule.js";
 import type { Lead, Prospect, SearchConfig } from "../types/business.js";
 import type { ExistingAutomation } from "../sheets/read-existing-leads.js";
 
-type Options = { dryRun: boolean; maxNewLeads?: number; city?: string; niche?: string };
+type Options = { dryRun: boolean; maxNewLeads?: number; maxResults?: number; city?: string; niche?: string };
 type Candidate = { lead: Lead; search: SearchConfig; runId: string };
 
 function identity(item: { placeId: string | null; dedupeHash: string }) { return dedupeKey(item); }
@@ -55,7 +57,14 @@ export async function prospect(sheets: SheetsClient, env: Env, options: Options)
   let searches = filtered;
   if (!searches.length && options.city && options.niche) searches = [{ niche: options.niche, city: options.city, state: "", maxResults: env.MAX_RESULTS_PER_SEARCH, highValue: "Não sei", priority: 999, notes: "CLI override", query: `${options.niche} | ${options.city}` }];
   if (!searches.length) throw new Error("Nenhuma busca ativa encontrada na aba Busca ou compatível com os filtros informados.");
-  const selected = selectSearches(searches, existing, env.MAX_SEARCHES_PER_RUN);
+  searches = searches.map((search) => ({ ...search, maxResults: Math.min(options.maxResults ?? search.maxResults, env.MAX_RESULTS_PER_SEARCH) }));
+  const pendingQueries = new Set(existing.filter((item) => item.status === "PENDENTE").map((item) => item.query));
+  const selected = selectSearches(searches, pendingQueries, env.MAX_SEARCHES_PER_RUN, startedAt);
+  if (!options.dryRun) {
+    await writeSearchSchedule(sheets, configured.map((search) => ({
+      search, nextRunAt: nextRunDate(search.lastRunAt, search.priority, startedAt),
+    })));
+  }
   const weights = await readWeights(sheets);
   const priorityThresholds = await readPriorityThresholds(sheets);
   const apify = new ApifyPlacesProvider(env);
@@ -64,7 +73,14 @@ export async function prospect(sheets: SheetsClient, env: Env, options: Options)
   let rawBusinesses = 0;
   let invalid = 0;
   for (const search of selected) {
-    const response = await apify.search(search, env.MAX_RESULTS_PER_SEARCH);
+    const searchStartedAt = new Date();
+    const response = await apify.search(search, search.maxResults);
+    if (!options.dryRun && search.rowNumber) {
+      const lastRunAt = formatScheduleDate(searchStartedAt);
+      await writeSearchSchedule(sheets, [{
+        search, lastRunAt, nextRunAt: nextRunDate(lastRunAt, search.priority, searchStartedAt),
+      }]);
+    }
     runIds.push(response.runId);
     rawBusinesses += response.items.length;
     for (const item of response.items) {
