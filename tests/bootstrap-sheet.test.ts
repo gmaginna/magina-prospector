@@ -19,15 +19,22 @@ function makeSheets(searchRows: string[][], automationRows: string[][]) {
 describe("bootstrapSheet scheduling migration", () => {
   it("adds scheduling headers and seeds the latest matching automation history", async () => {
     const searchRows: string[][] = [[], [], [], [], ["Ativo?", "Nicho", "Cidade", "UF", "Máx. resultados", "Produto tem bom valor?", "Prioridade da busca", "Observações"], ["Sim", "Móveis", "Campinas", "SP", "10", "Sim", "1", ""]];
-    const automationRows = [AUTOMATION_HEADERS, ["place-1", "hash", "Empresa", "Móveis", "Campinas", "Móveis | Campinas, SP", "2026-09-15T12:00:00.000Z", "2026-09-20T12:00:00.000Z"]];
+    const automationRows = [AUTOMATION_HEADERS, ["place-1", "hash", "Empresa", "Móveis", "Campinas", "Móveis | Campinas, SP", "2026-09-15T12:00:00.000Z", "2026-09-23T12:00:00.000Z"]];
     const { sheets, write, batchWrite } = makeSheets(searchRows, automationRows);
     const changes = await bootstrapSheet(sheets);
     expect(write).toHaveBeenCalledWith("'Busca'!I5:J5", [["Última execução", "Próxima execução"]]);
     expect(batchWrite).toHaveBeenCalledWith([
-      { range: "'Busca'!I6", values: [["20/09/2026"]] },
-      { range: "'Busca'!J6", values: [["27/09/2026"]] },
+      { range: "'Busca'!I6", values: [["23/09/2026"]] },
+      { range: "'Busca'!J6", values: [["22/11/2026"]] },
     ]);
     expect(changes).toContain("colunas Última execução e Próxima execução adicionadas em Busca");
+  });
+
+  it("does not restore a manually cleared last-run date after migration", async () => {
+    const searchRows: string[][] = [[], [], [], [], ["Ativo?", "Nicho", "Cidade", "UF", "Máx. resultados", "Produto tem bom valor?", "Prioridade da busca", "Observações", "Última execução", "Próxima execução"], ["Sim", "Móveis", "Campinas", "SP", "10", "Sim", "1", "", "", "Agora"]];
+    const { sheets, batchWrite } = makeSheets(searchRows, [AUTOMATION_HEADERS, ["place-1", "hash", "Empresa", "Móveis", "Campinas", "Móveis | Campinas, SP", "2026-09-15T12:00:00.000Z", "2026-09-23T12:00:00.000Z"]]);
+    await bootstrapSheet(sheets);
+    expect(batchWrite).toHaveBeenCalledWith([{ range: "'Busca'!J6", values: [["Agora"]] }]);
   });
 
   it("refuses to append headers over existing unlabelled data", async () => {

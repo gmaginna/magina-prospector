@@ -9,6 +9,7 @@ export type SearchConfig = {
   query: string;
   rowNumber?: number;
   lastRunAt?: string | null;
+  nextRunAt?: string | null;
   lastRunColumn?: number;
   nextRunColumn?: number;
 };

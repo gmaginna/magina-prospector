@@ -41,7 +41,9 @@ export async function bootstrapSheet(sheets: SheetsClient): Promise<string[]> {
   }
 
   const searches = await readSearchConfig(sheets);
-  const history = await readExistingLeads(sheets);
+  // Historical automation data is used only during the first schedule-column migration.
+  // Afterwards Busca is authoritative, so clearing Última execução intentionally resets a search.
+  const history = missingHeaders.length ? await readExistingLeads(sheets) : [];
   const lastRunByQuery = new Map<string, Date>();
   for (const record of history) {
     const date = parseScheduleDate(record.lastSeen);

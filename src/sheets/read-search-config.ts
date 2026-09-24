@@ -27,7 +27,7 @@ export async function readSearchConfig(sheets: SheetsClient): Promise<SearchConf
     if (!niche || !city) return [];
     const max = Number(get(row, columns.max, "20"));
     const priority = Number(get(row, columns.priority));
-    if (!Number.isInteger(priority) || priority < 1) throw new Error(`Prioridade inválida na linha ${headerIndex + index + 2}; use um inteiro positivo.`);
+    if (!Number.isInteger(priority) || priority < 1 || priority > 3) throw new Error(`Prioridade inválida na linha ${headerIndex + index + 2}; use 1, 2 ou 3.`);
     const highValueText = get(row, columns.highValue, "Não sei");
     const highValue = /^(sim|não|nao)$/i.test(highValueText) ? (normalizeText(highValueText) === "sim" ? "Sim" : "Não") : "Não sei";
     const state = get(row, columns.state);
@@ -37,6 +37,7 @@ export async function readSearchConfig(sheets: SheetsClient): Promise<SearchConf
       query: `${niche} | ${city}${state ? `, ${state}` : ""}`,
       rowNumber: headerIndex + index + 2,
       lastRunAt: get(row, columns.lastRun) || null,
+      nextRunAt: get(row, columns.nextRun) || null,
       lastRunColumn: columns.lastRun,
       nextRunColumn: columns.nextRun,
     }];

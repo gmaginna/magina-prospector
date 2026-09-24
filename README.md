@@ -40,7 +40,7 @@ O comando `npm run validate-sheet` verifica as abas `Planos`, `Leads`, `Configur
 
 Na aba `Busca`, mantenha as colunas `Ativo?`, `Nicho`, `Cidade`, `UF`, `Máx. resultados`, `Produto tem bom valor?`, `Prioridade da busca`, `Observações`, `Última execução` e `Próxima execução`. `Máx. resultados` vale para cada linha, limitado pelo teto de segurança `MAX_RESULTS_PER_SEARCH`. O job ignora linhas inativas e escolhe até quatro pesquisas por execução.
 
-Prioridade define frequência: prioridade 1 roda a cada 7 dias, 2 a cada 14 e 3 a cada 21. Buscas nunca executadas têm preferência; entre elas, prioridade menor vem primeiro. As demais são ordenadas por urgência (`dias desde a última execução ÷ intervalo`), maior urgência primeiro. `Próxima execução` mostra `Agora` para buscas nunca executadas. Execuções que falham não atualizam `Última execução`.
+Prioridade define o intervalo de revisão do mercado: prioridade 1 roda a cada 60 dias, 2 a cada 90 e 3 a cada 120. A seleção esgota as buscas ativas sem `Última execução` em ordem de linha, independentemente da prioridade. Depois seleciona apenas buscas cuja `Próxima execução` venceu, da mais atrasada para a menos atrasada. Se nenhuma estiver elegível, o job termina sem chamar Apify. `Próxima execução` mostra `Agora` para buscas nunca executadas. Limpar `Última execução` reinicia a busca como nunca executada; após a migração inicial, o bootstrap não repõe esse histórico automaticamente. Execuções que falham não atualizam `Última execução`.
 
 ## Apify e custos
 

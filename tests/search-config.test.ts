@@ -14,7 +14,7 @@ describe("readSearchConfig", () => {
     const searches = await readSearchConfig(sheetWith(rows));
     expect(searches).toMatchObject([{
       niche: "Móveis planejados", city: "Campinas", maxResults: 10, priority: 1,
-      rowNumber: 6, lastRunAt: "16/09/2026", lastRunColumn: 8, nextRunColumn: 9,
+      rowNumber: 6, lastRunAt: "16/09/2026", nextRunAt: "23/09/2026", lastRunColumn: 8, nextRunColumn: 9,
     }]);
   });
 
@@ -26,5 +26,10 @@ describe("readSearchConfig", () => {
   it("rejects an invalid active priority instead of silently scheduling it", async () => {
     const rows = [headers, ["Sim", "Móveis", "Campinas", "SP", "20", "Sim", "P1", "", "", ""]];
     await expect(readSearchConfig(sheetWith(rows))).rejects.toThrow("Prioridade inválida");
+  });
+
+  it("rejects priorities outside the supported 1–3 range", async () => {
+    const rows = [headers, ["Sim", "Móveis", "Campinas", "SP", "20", "Sim", "4", "", "", ""]];
+    await expect(readSearchConfig(sheetWith(rows))).rejects.toThrow("use 1, 2 ou 3");
   });
 });

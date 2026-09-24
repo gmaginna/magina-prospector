@@ -34,8 +34,10 @@ export function formatScheduleDate(value: Date): string {
 }
 
 export function priorityIntervalDays(priority: number): number {
-  if (!Number.isInteger(priority) || priority < 1) throw new Error("Prioridade da busca precisa ser um inteiro positivo.");
-  return priority * 7;
+  const intervals: Record<number, number> = { 1: 60, 2: 90, 3: 120 };
+  const interval = intervals[priority];
+  if (!Number.isInteger(priority) || interval === undefined) throw new Error("Prioridade da busca deve ser 1, 2 ou 3.");
+  return interval;
 }
 
 export function nextRunDate(lastRunAt: string | null | undefined, priority: number, now = new Date()): string {
@@ -45,9 +47,13 @@ export function nextRunDate(lastRunAt: string | null | undefined, priority: numb
   return formatScheduleDate(new Date(base.getTime() + priorityIntervalDays(priority) * DAY_MS));
 }
 
-export function urgency(lastRunAt: string | null | undefined, priority: number, now = new Date()): number {
-  const lastRun = parseScheduleDate(lastRunAt, now);
-  if (!lastRun) return Number.POSITIVE_INFINITY;
-  const elapsedDays = Math.max(0, (saoPauloCalendarDate(now).getTime() - lastRun.getTime()) / DAY_MS);
-  return elapsedDays / priorityIntervalDays(priority);
+export function daysLate(nextRunAt: string | null | undefined, now = new Date()): number | null {
+  const nextRun = parseScheduleDate(nextRunAt, now);
+  if (!nextRun) return normalizeNextRun(nextRunAt) === "agora" ? 0 : null;
+  const days = (saoPauloCalendarDate(now).getTime() - nextRun.getTime()) / DAY_MS;
+  return days >= 0 ? days : null;
+}
+
+function normalizeNextRun(value: string | null | undefined): string {
+  return value?.trim().toLocaleLowerCase("pt-BR") ?? "";
 }

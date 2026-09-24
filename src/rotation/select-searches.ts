@@ -1,19 +1,15 @@
 import type { SearchConfig } from "../types/business.js";
-import { parseScheduleDate, urgency } from "./frequency.js";
+import { daysLate, parseScheduleDate } from "./frequency.js";
 
-export function selectSearches(searches: SearchConfig[], pendingQueries: ReadonlySet<string>, limit: number, now = new Date()): SearchConfig[] {
-  return [...searches].sort((a, b) => {
-    const pendingOrder = Number(pendingQueries.has(b.query)) - Number(pendingQueries.has(a.query));
-    if (pendingOrder) return pendingOrder;
+export function selectSearches(searches: SearchConfig[], limit: number, now = new Date()): SearchConfig[] {
+  const neverRun = searches
+    .filter((search) => !parseScheduleDate(search.lastRunAt, now))
+    .sort((a, b) => (a.rowNumber ?? Number.MAX_SAFE_INTEGER) - (b.rowNumber ?? Number.MAX_SAFE_INTEGER) || a.query.localeCompare(b.query));
+  const due = searches
+    .filter((search) => parseScheduleDate(search.lastRunAt, now) !== null)
+    .map((search) => ({ search, lateness: daysLate(search.nextRunAt, now) }))
+    .filter((entry): entry is { search: SearchConfig; lateness: number } => entry.lateness !== null)
+    .sort((a, b) => b.lateness - a.lateness || a.search.priority - b.search.priority || (a.search.rowNumber ?? Number.MAX_SAFE_INTEGER) - (b.search.rowNumber ?? Number.MAX_SAFE_INTEGER));
 
-    const aLast = parseScheduleDate(a.lastRunAt, now);
-    const bLast = parseScheduleDate(b.lastRunAt, now);
-    if (!aLast && !bLast) return a.priority - b.priority || (a.rowNumber ?? 0) - (b.rowNumber ?? 0);
-    if (!aLast) return -1;
-    if (!bLast) return 1;
-
-    const urgencyOrder = urgency(b.lastRunAt, b.priority, now) - urgency(a.lastRunAt, a.priority, now);
-    if (Number.isFinite(urgencyOrder) && urgencyOrder) return urgencyOrder;
-    return a.priority - b.priority || aLast.getTime() - bLast.getTime() || (a.rowNumber ?? 0) - (b.rowNumber ?? 0);
-  }).slice(0, Math.max(0, limit));
+  return [...neverRun, ...due.map(({ search }) => search)].slice(0, Math.max(0, limit));
 }

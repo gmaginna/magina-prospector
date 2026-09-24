@@ -59,7 +59,18 @@ export async function prospect(sheets: SheetsClient, env: Env, options: Options)
   if (!searches.length) throw new Error("Nenhuma busca ativa encontrada na aba Busca ou compatível com os filtros informados.");
   searches = searches.map((search) => ({ ...search, maxResults: Math.min(options.maxResults ?? search.maxResults, env.MAX_RESULTS_PER_SEARCH) }));
   const pendingQueries = new Set(existing.filter((item) => item.status === "PENDENTE").map((item) => item.query));
-  const selected = selectSearches(searches, pendingQueries, env.MAX_SEARCHES_PER_RUN, startedAt);
+  const selected = selectSearches(searches, env.MAX_SEARCHES_PER_RUN, startedAt);
+  if (!selected.length) {
+    const result: Record<string, unknown> = {
+      runId: "", startedAt: startedAt.toISOString(), finishedAt: new Date().toISOString(), searchesSelected: [],
+      rawBusinesses: 0, invalid: 0, duplicates: 0, websiteInspections: 0, newCandidates: 0, inserted: 0,
+      updatedRecords: 0, errors: 0, priorityCounts: {}, top: [], prospects: [],
+    };
+    await persistRunResult(result);
+    console.log("Nenhuma busca nova ou vencida; nada a fazer.");
+    console.log(makeSummary(result));
+    return result;
+  }
   if (!options.dryRun) {
     await writeSearchSchedule(sheets, configured.map((search) => ({
       search, nextRunAt: nextRunDate(search.lastRunAt, search.priority, startedAt),

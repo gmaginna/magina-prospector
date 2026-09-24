@@ -2567,16 +2567,22 @@ No final, entregue:
 
 ---
 
-# Override de implementação — rotação por frequência e urgência
+# Override de implementação — descoberta e revisão por vencimento
 
 Este override substitui a ordenação estática da seção 16 para seleção de buscas. Ele preserva os demais limites e critérios do PRP.
 
 | ID | Requisito | Estado |
 |---|---|---|
-| ROT-1 | Prioridade 1, 2 e 3 corresponde a intervalos de 7, 14 e 21 dias. | verified |
-| ROT-2 | Busca nunca executada tem preferência; entre elas, prioridade numérica menor vem primeiro. | verified |
-| ROT-3 | Buscas já executadas são ordenadas por urgência: dias decorridos divididos pelo intervalo da prioridade, maior primeiro. | verified |
+| ROT-1 | Prioridade 1, 2 e 3 corresponde a intervalos de 60, 90 e 120 dias. | verified |
+| ROT-2 | Todas as buscas ativas nunca executadas vêm primeiro, em ordem de linha; prioridade não antecipa revisão. | verified |
+| ROT-3 | Depois da fila de nunca executadas, selecionar apenas buscas vencidas e ordenar pela maior defasagem de `Próxima execução`. | verified |
 | ROT-4 | Persistir `Última execução` e `Próxima execução` por linha na aba `Busca`; o bootstrap pode importar uma vez o último horário disponível em `Automação`, mas depois a própria linha é a fonte do agendamento. | verified: colunas migradas, buscas executadas e datas gravadas na planilha |
-| ROT-5 | Respeitar o limite de pesquisas por execução e o máximo de resultados configurado em cada linha. | verified |
-| ROT-6 | Preservar recuperação `PENDENTE`, filtros CLI, dry-run e execução manual do GitHub Actions. | verified |
-| ROT-7 | Testar prioridade, urgência, nunca executadas, capacidade por linha, persistência e falhas sem buscas pagas. | verified: checks locais; integração real após migração |
+| ROT-5 | Se não houver busca nunca executada ou vencida, encerrar sem chamada paga ao Apify. | verified |
+| ROT-6 | Campo `Última execução` vazio torna a busca elegível como nunca executada; bootstrap não restaura histórico após a migração inicial. | verified |
+| ROT-7 | Preservar deduplicação por Place ID, processamento pendente, filtros CLI, dry-run e execução manual do GitHub Actions. | verified |
+| ROT-8 | Respeitar o limite de pesquisas por execução e o máximo de resultados configurado em cada linha. | verified |
+| ROT-9 | Testar intervalos, datas, ordem de nunca executadas, defasagem, fila vazia e reset manual. | verified: 32 testes passaram; planilha recalculada com os novos intervalos |
+
+## Override de implementação — revisitas mais espaçadas
+
+Este override substitui os intervalos semanais do override anterior. O workflow segue agendado às segundas-feiras às 08:00 de São Paulo; uma execução manual adicional pode ser iniciada pelo operador.
